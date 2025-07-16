@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurador 3D Inmobiliario | Giot Hut Render 360</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .hero-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-title {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .hero-description {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .demo-section {
+            background: #f8f9fa;
+            padding: 80px 20px;
+            text-align: center;
+        }
+
+        .demo-title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .demo-subtitle {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 40px;
+        }
+
+        .demo-preview {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-preview img {
+            width: 100%;
+            height: auto;
+        }
+
+        .demo-placeholder {
+            height: 600px;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            color: #666;
+        }
+
+        .stats-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .footer {
+            background: #333;
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5em;
+            }
+
+            .hero-content {
+                padding: 40px 20px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 250px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .notification.error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">🏠 Configurador 3D Inmobiliario</h1>
+            <p class="hero-subtitle">Configurador 3D interactivo para propiedades inmobiliarias con tour 360 integrado</p>
+            <p class="hero-description">
+                Revoluciona la experiencia de compra inmobiliaria permitiendo a tus clientes visualizar y personalizar completamente las propiedades 
+                antes de comprarlas, con tecnología 3D de última generación y integración seamless con tour 360.
+            </p>
+            
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="launchConfigurator()">
+                    🚀 Probar Configurador
+                </button>
+                <a href="client/index.html" class="btn btn-secondary">
+                    📱 Ver Demo Completo
+                </a>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-title">Configurador 3D Interactivo</div>
+                    <div class="feature-description">
+                        Drag & Drop de muebles estilo IKEA con personalización completa de colores, materiales y dimensiones
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-title">Integración Tour 360°</div>
+                    <div class="feature-description">
+                        Transición fluida entre tour virtual y configuración 3D con compatibilidad completa con giot hut render 360
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <div class="feature-title">Calculadora de Costos Inteligente</div>
+                    <div class="feature-description">
+                        Precios en tiempo real de retailers integrados con opciones de financiamiento dinámicas
+                    </div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-title">Experiencia Multiplataforma</div>
+                    <div class="feature-description">
+                        Responsive design con realidad aumentada nativa y Progressive Web App funcionalidad offline
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="demo-section">
+        <h2 class="demo-title">Demo Interactivo</h2>
+        <p class="demo-subtitle">Experimenta el configurador 3D en acción</p>
+        
+        <div class="demo-preview">
+            <div class="demo-placeholder" id="demoPlaceholder">
+                🏠 Click en "Probar Configurador" para cargar el demo interactivo
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">+30%</div>
+                <div class="stat-label">Aumento en Comisiones</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">-25%</div>
+                <div class="stat-label">Tiempo de Venta</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">+40%</div>
+                <div class="stat-label">Conversión Web-to-Lead</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Satisfacción Cliente</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" class="footer-link">📚 Documentación</a>
+                <a href="#" class="footer-link">🔧 API</a>
+                <a href="#" class="footer-link">💬 Soporte</a>
+                <a href="https://github.com/tomydominguez23/inmobiliaria-configurador-3d" class="footer-link">📂 GitHub</a>
+            </div>
+            <p>&copy; 2025 Configurador 3D Inmobiliario. Desarrollado con ❤️ para revolucionar el sector inmobiliario.</p>
+        </div>
+    </footer>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification show ${isError ? 'error' : ''}`;
+            
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 3000);
+        }
+
+        function launchConfigurator() {
+            const placeholder = document.getElementById('demoPlaceholder');
+            const btn = event.target;
+            
+            // Show loading state
+            btn.innerHTML = '<span class="loading"></span> Cargando...';
+            btn.disabled = true;
+            
+            placeholder.innerHTML = '<div class="loading"></div> Cargando configurador 3D...';
+            
+            // Simulate loading and then redirect
+            setTimeout(() => {
+                // Create iframe with the configurator
+                placeholder.innerHTML = `
+                    <iframe 
+                        src="client/index.html" 
+                        width="100%" 
+                        height="600" 
+                        frameborder="0"
+                        style="border-radius: 10px;">
+                    </iframe>
+                `;
+                
+                btn.innerHTML = '✅ Configurador Cargado';
+                showNotification('¡Configurador 3D cargado exitosamente!');
+                
+                // Reset button after a moment
+                setTimeout(() => {
+                    btn.innerHTML = '🚀 Probar Configurador';
+                    btn.disabled = false;
+                }, 2000);
+                
+            }, 2000);
+        }
+
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate feature cards on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Initially hide elements
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+
+            // Add hover effects to buttons
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.05)';
+                });
+                
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+
+            // Counter animation for stats
+            function animateCounters() {
+                const counters = document.querySelectorAll('.stat-number');
+                
+                counters.forEach(counter => {
+                    const target = counter.textContent;
+                    const isPercentage = target.includes('%');
+                    const isNegative = target.includes('-');
+                    const isPositive = target.includes('+');
+                    
+                    let numericValue = parseInt(target.replace(/[^0-9]/g, ''));
+                    
+                    let current = 0;
+                    const increment = numericValue / 50;
+                    
+                    const updateCounter = () => {
+                        current += increment;
+                        if (current < numericValue) {
+                            let displayValue = Math.ceil(current);
+                            if (isNegative) displayValue = '-' + displayValue;
+                            if (isPositive && displayValue > 0) displayValue = '+' + displayValue;
+                            if (isPercentage) displayValue += '%';
+                            
+                            counter.textContent = displayValue;
+                            requestAnimationFrame(updateCounter);
+                        } else {
+                            counter.textContent = target;
+                        }
+                    };
+                    
+                    updateCounter();
+                });
+            }
+
+            // Trigger counter animation when stats section is visible
+            const statsObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateCounters();
+                        statsObserver.unobserve(entry.target);
+                    }
+                });
+            });
+
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) {
+                statsObserver.observe(statsSection);
+            }
+
+            showNotification('¡Bienvenido al Configurador 3D Inmobiliario!');
+        });
+
+        // Add some easter eggs
+        let clickCount = 0;
+        document.querySelector('.hero-title').addEventListener('click', function() {
+            clickCount++;
+            if (clickCount === 5) {
+                showNotification('🎉 ¡Has encontrado el easter egg! Desarrollado por tomydominguez23');
+                clickCount = 0;
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                launchConfigurator();
+            }
+        });
+    </script>
+</body>
+</html>
