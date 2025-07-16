@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurador 3D Inmobiliario - Demo Funcional</title>
+    
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
+        }
+
+        /* Loader Styles */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+
+        #loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        .loader-title {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .loader-progress {
+            width: 300px;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #loaderBar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loader-text {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        #loaderPercentage {
+            font-weight: bold;
+            color: #333;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Main App Styles */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app-container.loaded {
+            display: block;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .logo span {
+            color: #667eea;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 20px;
+            height: fit-content;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* Furniture Categories */
+        .category-list {
+            list-style: none;
+        }
+
+        .category-item {
+            margin-bottom: 10px;
+        }
+
+        .category-item button {
+            width: 100%;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .category-item button:hover,
+        .category-item button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Furniture Grid */
+        .furniture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .furniture-item {
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+
+        .furniture-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .furniture-item:active {
+            cursor: grabbing;
+        }
+
+        .furniture-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .furniture-name {
+            font-size: 0.8em;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .furniture-price {
+            font-size: 0.7em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        /* 3D Viewer */
+        .viewer-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #viewer3d {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(45deg, #f0f0f0, #e8e8e8);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .viewer-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            z-index: 100;
+        }
+
+        .viewer-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: #667eea;
+            transform: scale(1.1);
+        }
+
+        /* Right Panel */
+        .right-panel .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        /* Room Selector */
+        .room-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .room-btn {
+            padding: 15px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .room-btn:hover,
+        .room-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .room-icon {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+
+        .room-name {
+            font-size: 0.8em;
+        }
+
+        /* Selected Furniture List */
+        .selected-furniture {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .selected-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 8px;
+        }
+
+        .selected-item-info {
+            flex: 1;
+        }
+
+        .selected-item-name {
+            font-size: 0.9em;
+            margin-bottom: 3px;
+        }
+
+        .selected-item-price {
+            font-size: 0.8em;
+            color: #667eea;
+        }
+
+        .remove-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        /* Cost Summary */
+        .cost-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .cost-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .cost-total {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Toast Notifications */
+        #toastContainer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slideInRight 0.3s ease;
+            min-width: 300px;
+        }
+
+        .toast.success {
+            background: #28a745;
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+
+        .toast.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Error Container */
+        .error-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .error-content {
+            text-align: center;
+            padding: 40px;
+            max-width: 500px;
+        }
+
+        .error-content h2 {
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #666;
+            font-family: monospace;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .viewer-container {
+                order: 1;
+            }
+            
+            .right-panel {
+                order: 3;
+            }
+            
+            #viewer3d {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loader -->
+    <div id="loader">
+        <div class="loader-logo">🏠</div>
+        <div class="loader-title">Configurador 3D Inmobiliario</div>
+        <div class="loader-progress">
+            <div id="loaderBar"></div>
+        </div>
+        <div class="loader-text">
+            Cargando... <span id="loaderPercentage">0%</span>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    Configurador <span>3D</span>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span>🎯</span>
+                        <span>FPS: <span id="fpsCounter">60</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>📦</span>
+                        <span>Muebles: <span id="furnitureCount">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <span>💰</span>
+                        <span>Total: $<span id="totalCost">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-title">🛋️ Catálogo de Muebles</div>
+                
+                <!-- Categories -->
+                <ul class="category-list" id="categoryList">
+                    <li class="category-item">
+                        <button class="category-btn active" data-category="all">
+                            📦 Todos los Muebles
+                        </button>
+                    </li>
+                    <li class="category-item">
+                        <button class="category-btn" data-category="living">
+                            🛋️ Sala de Estar
+                        </button>
+                    </li>
+                    <li class="category-item">
+                        <button class="category-btn" data-category="bedroom">
+                            🛏️ Dormitorio
+                        </button>
+                    </li>
+                    <li class="category-item">
+                        <button class="category-btn" data-category="kitchen">
+                            🍽️ Cocina
+                        </button>
+                    </li>
+                    <li class="category-item">
+                        <button class="category-btn" data-category="office">
+                            💼 Oficina
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Furniture Grid -->
+                <div class="furniture-grid" id="furnitureGrid">
+                    <!-- Furniture items will be populated by JavaScript -->
+                </div>
+            </aside>
+
+            <!-- 3D Viewer -->
+            <main class="viewer-container">
+                <div id="viewer3d">
+                    <div>🏠 Arrastra muebles aquí para comenzar a diseñar</div>
+                </div>
+                
+                <!-- Viewer Overlay -->
+                <div class="viewer-overlay">
+                    <span id="viewerMode">Modo: Vista 3D</span>
+                </div>
+
+                <!-- Viewer Controls -->
+                <div class="viewer-controls">
+                    <button class="control-btn" onclick="resetCamera()" title="Resetear Cámara">
+                        🎯
+                    </button>
+                    <button class="control-btn" onclick="toggleFullscreen()" title="Pantalla Completa">
+                        ⛶
+                    </button>
+                    <button class="control-btn" onclick="toggleWireframe()" title="Modo Wireframe">
+                        📐
+                    </button>
+                </div>
+            </main>
+
+            <!-- Right Panel -->
+            <aside class="sidebar right-panel">
+                <!-- Room Selector -->
+                <div class="sidebar-section">
+                    <div class="section-title">🏠 Habitaciones</div>
+                    <div class="room-selector">
+                        <button class="room-btn active" data-room="living">
+                            <div class="room-icon">🛋️</div>
+                            <div class="room-name">Sala</div>
+                        </button>
+                        <button class="room-btn" data-room="bedroom">
+                            <div class="room-icon">🛏️</div>
+                            <div class="room-name">Dormitorio</div>
+                        </button>
+                        <button class="room-btn" data-room="kitchen">
+                            <div class="room-icon">🍽️</div>
+                            <div class="room-name">Cocina</div>
+                        </button>
+                        <button class="room-btn" data-room="office">
+                            <div class="room-icon">💼</div>
+                            <div class="room-name">Oficina</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selected Furniture -->
+                <div class="sidebar-section">
+                    <div class="section-title">📦 Muebles Seleccionados</div>
+                    <div class="selected-furniture" id="selectedFurniture">
+                        <div style="text-align: center; color: #666; padding: 20px;">
+                            Aún no has agregado muebles
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost Summary -->
+                <div class="sidebar-section">
+                    <div class="section-title">💰 Resumen de Costos</div>
+                    <div class="cost-summary" id="costSummary">
+                        <div class="cost-line">
+                            <span>Subtotal:</span>
+                            <span>$<span id="subtotal">0</span></span>
+                        </div>
+                        <div class="cost-line">
+                            <span>Envío:</span>
+                            <span>$<span id="shipping">0</span></span>
+                        </div>
+                        <div class="cost-line cost-total">
+                            <span>Total:</span>
+                            <span>$<span id="totalAmount">0</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="sidebar-section">
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="saveDesign()">
+                            💾 Guardar Diseño
+                        </button>
+                        <button class="btn btn-secondary" onclick="shareDesign()">
+                            🔗 Compartir
+                        </button>
+                        <button class="btn btn-success" onclick="requestQuote()">
+                            💬 Solicitar Cotización
+                        </button>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <script>
+        // Global variables
+        let currentRoom = 'living';
+        let selectedFurniture = [];
+        let totalCost = 0;
+
+        // Mock furniture database
+        const FURNITURE_DATABASE = [
+            // Living Room
+            { id: 1, name: 'Sofá Modular', category: 'living', price: 899990, icon: '🛋️', room: 'living' },
+            { id: 2, name: 'Mesa de Centro', category: 'living', price: 199990, icon: '🪑', room: 'living' },
+            { id: 3, name: 'Estantería', category: 'living', price: 299990, icon: '📚', room: 'living' },
+            { id: 4, name: 'Lámpara de Pie', category: 'living', price: 149990, icon: '💡', room: 'living' },
+            
+            // Bedroom
+            { id: 5, name: 'Cama King', category: 'bedroom', price: 699990, icon: '🛏️', room: 'bedroom' },
+            { id: 6, name: 'Cómoda', category: 'bedroom', price: 349990, icon: '🗄️', room: 'bedroom' },
+            { id: 7, name: 'Mesa de Noche', category: 'bedroom', price: 129990, icon: '🛏️', room: 'bedroom' },
+            { id: 8, name: 'Espejo', category: 'bedroom', price: 99990, icon: '🪞', room: 'bedroom' },
+            
+            // Kitchen
+            { id: 9, name: 'Mesa Comedor', category: 'kitchen', price: 459990, icon: '🍽️', room: 'kitchen' },
+            { id: 10, name: 'Sillas Comedor', category: 'kitchen', price: 199990, icon: '🪑', room: 'kitchen' },
+            { id: 11, name: 'Alacena', category: 'kitchen', price: 399990, icon: '🗄️', room: 'kitchen' },
+            { id: 12, name: 'Barra Desayuno', category: 'kitchen', price: 299990, icon: '🍽️', room: 'kitchen' },
+            
+            // Office
+            { id: 13, name: 'Escritorio', category: 'office', price: 329990, icon: '💻', room: 'office' },
+            { id: 14, name: 'Silla Oficina', category: 'office', price: 199990, icon: '🪑', room: 'office' },
+            { id: 15, name: 'Librero', category: 'office', price: 249990, icon: '📚', room: 'office' },
+            { id: 16, name: 'Archivador', category: 'office', price: 179990, icon: '🗃️', room: 'office' }
+        ];
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando Configurador 3D...');
+            
+            // Simulate loading process
+            simulateLoading();
+            
+            // Initialize furniture grid
+            initializeFurnitureGrid();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize 3D viewer (mock)
+            initialize3DViewer();
+        });
+
+        function simulateLoading() {
+            const steps = [
+                { step: 'dom', message: 'Inicializando interfaz...' },
+                { step: 'engine3D', message: 'Cargando motor 3D...' },
+                { step: 'furniture', message: 'Cargando catálogo...' },
+                { step: 'integrations', message: 'Configurando integraciónes...' },
+                { step: 'complete', message: 'Finalizando...' }
+            ];
+
+            let currentStep = 0;
+            
+            function nextStep() {
+                if (currentStep < steps.length) {
+                    const progress = ((currentStep + 1) / steps.length) * 100;
+                    updateLoadingUI(progress, steps[currentStep].message);
+                    currentStep++;
+                    
+                    if (currentStep < steps.length) {
+                        setTimeout(nextStep, 800);
+                    } else {
+                        completeLoading();
+                    }
+                }
+            }
+            
+            setTimeout(nextStep, 500);
+        }
+
+        function updateLoadingUI(progress, message) {
+            const loaderBar = document.getElementById('loaderBar');
+            const loaderPercentage = document.getElementById('loaderPercentage');
+            const loaderText = document.querySelector('.loader-text');
+            
+            if (loaderBar) {
+                loaderBar.style.width = `${progress}%`;
+            }
+            
+            if (loaderPercentage) {
+                loaderPercentage.textContent = `${Math.round(progress)}%`;
+            }
+            
+            if (loaderText && message) {
+                loaderText.innerHTML = `${message} <span id="loaderPercentage">${Math.round(progress)}%</span>`;
+            }
+        }
+
+        function completeLoading() {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('appContainer').classList.add('loaded');
+                
+                showToast('¡Configurador 3D cargado exitosamente! 🎉', 'success');
+                
+                console.log('✅ Configurador 3D inicializado correctamente');
+            }, 500);
+        }
+
+        function initializeFurnitureGrid() {
+            const grid = document.getElementById('furnitureGrid');
+            
+            function renderFurniture(category = 'all') {
+                const filteredFurniture = category === 'all' 
+                    ? FURNITURE_DATABASE 
+                    : FURNITURE_DATABASE.filter(item => item.category === category);
+                
+                grid.innerHTML = '';
+                
+                filteredFurniture.forEach(item => {
+                    const furnitureElement = document.createElement('div');
+                    furnitureElement.className = 'furniture-item';
+                    furnitureElement.draggable = true;
+                    furnitureElement.dataset.furnitureId = item.id;
+                    
+                    furnitureElement.innerHTML = `
+                        <div class="furniture-icon">${item.icon}</div>
+                        <div class="furniture-name">${item.name}</div>
+                        <div class="furniture-price">$${item.price.toLocaleString()}</div>
+                    `;
+                    
+                    // Add drag events
+                    furnitureElement.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', item.id);
+                        furnitureElement.style.opacity = '0.5';
+                    });
+                    
+                    furnitureElement.addEventListener('dragend', () => {
+                        furnitureElement.style.opacity = '1';
+                    });
+                    
+                    // Add click to add
+                    furnitureElement.addEventListener('click', () => {
+                        addFurnitureToScene(item);
+                    });
+                    
+                    grid.appendChild(furnitureElement);
+                });
+            }
+            
+            renderFurniture();
+            
+            // Category buttons
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Update active state
+                    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Render furniture for category
+                    const category = btn.dataset.category;
+                    renderFurniture(category);
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            // Room selector
+            document.querySelectorAll('.room-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Update active state
+                    document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Change current room
+                    currentRoom = btn.dataset.room;
+                    updateViewerMode(`Habitación: ${getRoomName(currentRoom)}`);
+                    
+                    console.log(`🏠 Cambiado a habitación: ${currentRoom}`);
+                });
+            });
+
+            // 3D Viewer drop zone
+            const viewer3d = document.getElementById('viewer3d');
+            
+            viewer3d.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                viewer3d.style.borderColor = '#667eea';
+                viewer3d.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+            });
+
+            viewer3d.addEventListener('dragleave', (e) => {
+                viewer3d.style.borderColor = 'transparent';
+                viewer3d.style.backgroundColor = '';
+            });
+
+            viewer3d.addEventListener('drop', (e) => {
+                e.preventDefault();
+                viewer3d.style.borderColor = 'transparent';
+                viewer3d.style.backgroundColor = '';
+                
+                try {
+                    const furnitureId = parseInt(e.dataTransfer.getData('text/plain'));
+                    const furniture = FURNITURE_DATABASE.find(f => f.id === furnitureId);
+                    if (furniture) {
+                        addFurnitureToScene(furniture);
+                    }
+                } catch (error) {
+                    console.error('Error handling drop:', error);
+                    showToast('Error al agregar mueble', 'error');
+                }
+            });
+        }
+
+        function addFurnitureToScene(furniture) {
+            // Add to selected furniture
+            const existingIndex = selectedFurniture.findIndex(f => f.id === furniture.id);
+            
+            if (existingIndex >= 0) {
+                // Increase quantity
+                selectedFurniture[existingIndex].quantity++;
+            } else {
+                // Add new furniture
+                selectedFurniture.push({
+                    ...furniture,
+                    quantity: 1,
+                    addedAt: new Date()
+                });
+            }
+            
+            updateSelectedFurnitureUI();
+            updateCostSummary();
+            updateHeaderStats();
+            
+            showToast(`${furniture.icon} ${furniture.name} agregado a la escena`, 'success');
+            
+            console.log(`📦 Mueble agregado: ${furniture.name}`);
+        }
+
+        function removeFurnitureFromScene(furnitureId) {
+            const index = selectedFurniture.findIndex(f => f.id === furnitureId);
+            
+            if (index >= 0) {
+                const furniture = selectedFurniture[index];
+                
+                if (furniture.quantity > 1) {
+                    furniture.quantity--;
+                } else {
+                    selectedFurniture.splice(index, 1);
+                }
+                
+                updateSelectedFurnitureUI();
+                updateCostSummary();
+                updateHeaderStats();
+                
+                showToast(`${furniture.icon} ${furniture.name} removido`, 'warning');
+                
+                console.log(`🗑️ Mueble removido: ${furniture.name}`);
+            }
+        }
+
+        function updateSelectedFurnitureUI() {
+            const container = document.getElementById('selectedFurniture');
+            
+            if (selectedFurniture.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #666; padding: 20px;">
+                        Aún no has agregado muebles
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            selectedFurniture.forEach(furniture => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'selected-item';
+                
+                itemElement.innerHTML = `
+                    <div class="selected-item-info">
+                        <div class="selected-item-name">
+                            ${furniture.icon} ${furniture.name}
+                            ${furniture.quantity > 1 ? ` x${furniture.quantity}` : ''}
+                        </div>
+                        <div class="selected-item-price">
+                            $${(furniture.price * furniture.quantity).toLocaleString()}
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFurnitureFromScene(${furniture.id})" title="Remover">
+                        ×
+                    </button>
+                `;
+                
+                container.appendChild(itemElement);
+            });
+        }
+
+        function updateCostSummary() {
+            const subtotal = selectedFurniture.reduce((sum, furniture) => 
+                sum + (furniture.price * furniture.quantity), 0);
+            
+            const shipping = subtotal > 500000 ? 0 : 29990; // Free shipping over $500k
+            const total = subtotal + shipping;
+            
+            document.getElementById('subtotal').textContent = subtotal.toLocaleString();
+            document.getElementById('shipping').textContent = shipping.toLocaleString();
+            document.getElementById('totalAmount').textContent = total.toLocaleString();
+            
+            totalCost = total;
+        }
+
+        function updateHeaderStats() {
+            const furnitureCount = selectedFurniture.reduce((sum, furniture) => 
+                sum + furniture.quantity, 0);
+            
+            document.getElementById('furnitureCount').textContent = furnitureCount;
+            document.getElementById('totalCost').textContent = totalCost.toLocaleString();
+        }
+
+        function updateViewerMode(mode) {
+            document.getElementById('viewerMode').textContent = mode;
+        }
+
+        function getRoomName(room) {
+            const names = {
+                living: 'Sala de Estar',
+                bedroom: 'Dormitorio',
+                kitchen: 'Cocina',
+                office: 'Oficina'
+            };
+            return names[room] || room;
+        }
+
+        function initialize3DViewer() {
+            // Mock 3D viewer initialization
+            const viewer = document.getElementById('viewer3d');
+            
+            // Simulate loading a 3D scene
+            setTimeout(() => {
+                viewer.innerHTML = `
+                    <div style="text-align: center; color: #666;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🏠</div>
+                        <div>Vista 3D del ${getRoomName(currentRoom)}</div>
+                        <div style="font-size: 0.9em; margin-top: 10px;">
+                            Arrastra muebles aquí para agregarlos a la escena
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // Control functions
+        function resetCamera() {
+            showToast('Cámara reiniciada', 'success');
+            console.log('🎯 Cámara reiniciada');
+        }
+
+        function toggleFullscreen() {
+            const viewer = document.getElementById('viewer3d');
+            
+            if (!document.fullscreenElement) {
+                viewer.requestFullscreen().catch(err => {
+                    console.error('Error activating fullscreen:', err);
+                    showToast('Error activando pantalla completa', 'error');
+                });
+            } else {
+                document.exitFullscreen();
+            }
+            
+            console.log('⛶ Fullscreen toggle');
+        }
+
+        function toggleWireframe() {
+            showToast('Modo wireframe activado', 'success');
+            console.log('📐 Wireframe toggle');
+        }
+
+        // Action functions
+        function saveDesign() {
+            if (selectedFurniture.length === 0) {
+                showToast('Agrega muebles antes de guardar', 'warning');
+                return;
+            }
+            
+            const designName = prompt('Nombre del diseño:', `Diseño ${new Date().toLocaleDateString()}`);
+            
+            if (designName) {
+                const design = {
+                    name: designName,
+                    room: currentRoom,
+                    furniture: selectedFurniture,
+                    totalCost: totalCost,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem(`design_${Date.now()}`, JSON.stringify(design));
+                    showToast(`Diseño "${designName}" guardado exitosamente`, 'success');
+                    console.log('💾 Diseño guardado:', design);
+                } catch (error) {
+                    showToast('Error guardando diseño', 'error');
+                    console.error('Error saving design:', error);
+                }
+            }
+        }
+
+        function shareDesign() {
+            if (selectedFurniture.length === 0) {
+                showToast('Agrega muebles antes de compartir', 'warning');
+                return;
+            }
+            
+            const shareData = {
+                title: 'Mi Configuración 3D',
+                text: `He creado un diseño increíble con ${selectedFurniture.length} muebles por $${totalCost.toLocaleString()}`,
+                url: window.location.href
+            };
+            
+            if (navigator.share) {
+                navigator.share(shareData);
+            } else {
+                // Fallback to clipboard
+                navigator.clipboard.writeText(shareData.url).then(() => {
+                    showToast('Enlace copiado al portapapeles', 'success');
+                }).catch(() => {
+                    showToast('No se pudo copiar el enlace', 'error');
+                });
+            }
+            
+            console.log('🔗 Diseño compartido');
+        }
+
+        function requestQuote() {
+            if (selectedFurniture.length === 0) {
+                showToast('Agrega muebles antes de solicitar cotización', 'warning');
+                return;
+            }
+            
+            const furnitureList = selectedFurniture.map(f => 
+                `- ${f.name} x${f.quantity}: $${(f.price * f.quantity).toLocaleString()}`
+            ).join('\\n');
+            
+            const message = `¡Hola! Me interesa cotizar los siguientes muebles:\\n\\n${furnitureList}\\n\\nTotal: $${totalCost.toLocaleString()}\\n\\n¡Gracias!`;
+            
+            const whatsappUrl = `https://wa.me/56912345678?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+            
+            showToast('Redirigiendo a WhatsApp...', 'success');
+            console.log('💬 Cotización solicitada');
+        }
+
+        // Utility functions
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+            
+            console.log(`🔔 Toast: ${message} (${type})`);
+        }
+
+        // FPS Counter simulation
+        function startFPSCounter() {
+            let lastFrameTime = performance.now();
+            
+            function updateFPS() {
+                const now = performance.now();
+                const fps = Math.round(1000 / (now - lastFrameTime));
+                const fpsElement = document.getElementById('fpsCounter');
+                
+                if (fpsElement) {
+                    fpsElement.textContent = Math.min(fps, 60);
+                }
+                
+                lastFrameTime = now;
+                requestAnimationFrame(updateFPS);
+            }
+            
+            updateFPS();
+        }
+
+        // Start FPS counter once loaded
+        setTimeout(startFPSCounter, 3000);
+
+        console.log('🏠 Configurador 3D Inmobiliario - Demo Funcional Cargado');
+    </script>
+</body>
+</html>
