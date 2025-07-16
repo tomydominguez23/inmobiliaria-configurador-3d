@@ -1,0 +1,639 @@
+/* ==========================================================================
+   TOUR 360° - ESTILOS E INTEGRACIÓN
+   ========================================================================== */
+
+/* Variables específicas del tour 360 */
+:root {
+  --tour360-bg: #000000;
+  --hotspot-color: #ff6b6b;
+  --hotspot-pulse: rgba(255, 107, 107, 0.4);
+  --navigation-bg: rgba(0, 0, 0, 0.8);
+  --transition-overlay: rgba(67, 126, 234, 0.9);
+}
+
+/* ==========================================================================
+   CONTENEDOR PRINCIPAL DEL TOUR 360
+   ========================================================================== */
+
+.tour360-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--tour360-bg);
+  overflow: hidden;
+}
+
+.tour360-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  cursor: grab;
+}
+
+.tour360-viewport:active {
+  cursor: grabbing;
+}
+
+.tour360-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ==========================================================================
+   HOTSPOTS INTERACTIVOS
+   ========================================================================== */
+
+.tour360-hotspot {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: var(--hotspot-color);
+  border: 3px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.tour360-hotspot::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--hotspot-pulse);
+  border-radius: 50%;
+  animation: hotspot-pulse 2s infinite;
+  z-index: -1;
+}
+
+.tour360-hotspot:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 0 20px var(--hotspot-color);
+}
+
+.tour360-hotspot.active {
+  background: var(--primary-color);
+  animation: none;
+}
+
+.tour360-hotspot.configurador {
+  background: #4ecdc4;
+}
+
+.tour360-hotspot.configurador::before {
+  background: rgba(78, 205, 196, 0.4);
+}
+
+.tour360-hotspot.navegacion {
+  background: #45b7d1;
+}
+
+.tour360-hotspot.navegacion::before {
+  background: rgba(69, 183, 209, 0.4);
+}
+
+.tour360-hotspot.informacion {
+  background: #f39c12;
+}
+
+.tour360-hotspot.informacion::before {
+  background: rgba(243, 156, 18, 0.4);
+}
+
+@keyframes hotspot-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   TOOLTIPS DE HOTSPOTS
+   ========================================================================== */
+
+.hotspot-tooltip {
+  position: absolute;
+  background: var(--navigation-bg);
+  color: white;
+  padding: 12px 16px;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.hotspot-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hotspot-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================================
+   NAVEGACIÓN DEL TOUR
+   ========================================================================== */
+
+.tour360-navigation {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navigation-bg);
+  padding: 15px 20px;
+  border-radius: 25px;
+  display: flex;
+  gap: 15px;
+  backdrop-filter: blur(10px);
+  z-index: 150;
+}
+
+.nav-room {
+  padding: 8px 16px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  color: white;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.nav-room:hover,
+.nav-room.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   CONTROLES DEL TOUR
+   ========================================================================== */
+
+.tour360-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 150;
+}
+
+.tour-control {
+  width: 50px;
+  height: 50px;
+  background: var(--navigation-bg);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.tour-control:hover {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.tour-control.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Controles específicos */
+.control-zoom-in::before { content: '+'; }
+.control-zoom-out::before { content: '−'; }
+.control-fullscreen::before { content: '⛶'; }
+.control-autorotate::before { content: '↻'; }
+.control-configurador::before { content: '🎨'; }
+.control-info::before { content: 'ℹ'; }
+
+/* ==========================================================================
+   PANEL DE INFORMACIÓN
+   ========================================================================== */
+
+.tour360-info-panel {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: var(--navigation-bg);
+  padding: 20px;
+  border-radius: var(--border-radius-lg);
+  color: white;
+  max-width: 300px;
+  backdrop-filter: blur(10px);
+  z-index: 150;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.tour360-info-panel.visible {
+  transform: translateX(0);
+}
+
+.info-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.info-panel-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.info-panel-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.info-panel-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.info-panel-content {
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.room-details {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.detail-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.detail-value {
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   TRANSICIÓN A CONFIGURADOR
+   ========================================================================== */
+
+.tour-to-configurador {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--transition-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.tour-to-configurador.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.transition-content {
+  text-align: center;
+  color: white;
+  max-width: 400px;
+  padding: 40px;
+}
+
+.transition-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: transition-pulse 1.5s infinite;
+}
+
+.transition-title {
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.transition-description {
+  font-size: var(--font-size-md);
+  margin-bottom: 30px;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.transition-button {
+  background: white;
+  color: var(--primary-color);
+  border: none;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.transition-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes transition-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* ==========================================================================
+   MINIMAP DE NAVEGACIÓN
+   ========================================================================== */
+
+.tour360-minimap {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 150px;
+  height: 100px;
+  background: var(--navigation-bg);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(10px);
+  z-index: 150;
+  overflow: hidden;
+}
+
+.minimap-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100"><rect width="150" height="100" fill="%23f0f0f0"/><rect x="10" y="10" width="30" height="20" fill="%23e0e0e0"/><rect x="50" y="15" width="25" height="15" fill="%23e0e0e0"/><rect x="85" y="10" width="35" height="25" fill="%23e0e0e0"/><rect x="10" y="40" width="40" height="30" fill="%23e0e0e0"/><rect x="60" y="45" width="30" height="25" fill="%23e0e0e0"/><rect x="100" y="40" width="40" height="35" fill="%23e0e0e0"/></svg>') center/cover;
+}
+
+.minimap-position {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-color);
+  border: 2px solid white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.minimap-room {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.minimap-room:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.minimap-room.current {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Posiciones de habitaciones en el minimap */
+.minimap-living { top: 10px; left: 10px; width: 30px; height: 20px; }
+.minimap-dining { top: 15px; left: 50px; width: 25px; height: 15px; }
+.minimap-kitchen { top: 10px; left: 85px; width: 35px; height: 25px; }
+.minimap-bedroom1 { top: 40px; left: 10px; width: 40px; height: 30px; }
+.minimap-bedroom2 { top: 45px; left: 60px; width: 30px; height: 25px; }
+.minimap-bathroom { top: 40px; left: 100px; width: 40px; height: 35px; }
+
+/* ==========================================================================
+   CONFIGURADOR INTEGRADO
+   ========================================================================== */
+
+.tour360-configurador-panel {
+  position: absolute;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100%;
+  background: var(--bg-primary);
+  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+  transition: right 0.4s ease;
+  z-index: 200;
+  overflow-y: auto;
+}
+
+.tour360-configurador-panel.visible {
+  right: 0;
+}
+
+.configurador-panel-header {
+  background: var(--primary-color);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.configurador-panel-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.configurador-panel-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.configurador-panel-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.configurador-panel-content {
+  padding: 20px;
+}
+
+/* Quick add furniture in tour mode */
+.quick-furniture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.quick-furniture-item {
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.quick-furniture-item:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.quick-furniture-icon {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.quick-furniture-name {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   RESPONSIVE - TOUR 360
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .tour360-navigation {
+    bottom: 20px;
+    padding: 10px 15px;
+    flex-wrap: wrap;
+    max-width: calc(100% - 40px);
+  }
+  
+  .nav-room {
+    padding: 6px 12px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .tour360-controls {
+    top: 15px;
+    right: 15px;
+    gap: 8px;
+  }
+  
+  .tour-control {
+    width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  .tour360-info-panel {
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    max-width: none;
+    transform: translateY(-100%);
+  }
+  
+  .tour360-info-panel.visible {
+    transform: translateY(0);
+  }
+  
+  .tour360-minimap {
+    display: none;
+  }
+  
+  .tour360-configurador-panel {
+    width: 100%;
+    right: -100%;
+  }
+  
+  .hotspot-tooltip {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: normal;
+    max-width: 200px;
+    text-align: center;
+  }
+  
+  .hotspot-tooltip::after {
+    top: auto;
+    bottom: -6px;
+    border-top-color: transparent;
+    border-bottom-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+@media (max-width: 480px) {
+  .tour360-hotspot {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  .transition-content {
+    padding: 20px;
+  }
+  
+  .transition-icon {
+    font-size: 40px;
+  }
+  
+  .transition-title {
+    font-size: var(--font-size-xl);
+  }
+}
