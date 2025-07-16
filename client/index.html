@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Configurador 3D Inmobiliario - Visualiza tu propiedad antes de comprarla">
+    <title>Configurador 3D Inmobiliario | Tour 360 Interactivo</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/configurador.css">
+    <link rel="stylesheet" href="css/tour360.css">
+    
+    <!-- Three.js y librerías 3D -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+    
+    <!-- Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+</head>
+<body>
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        <div class="loader-content">
+            <div class="loader-logo">🏠</div>
+            <div class="loader-text">Cargando Configurador 3D...</div>
+            <div class="loader-progress">
+                <div class="loader-bar" id="loaderBar"></div>
+            </div>
+            <div class="loader-percentage" id="loaderPercentage">0%</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>🏠 Configurador 3D</h1>
+                <span class="beta">BETA</span>
+            </div>
+            
+            <nav class="nav">
+                <button class="nav-btn active" data-mode="configurador">
+                    🎨 Configurador
+                </button>
+                <button class="nav-btn" data-mode="tour360">
+                    🔄 Tour 360°
+                </button>
+                <button class="nav-btn" data-mode="ar">
+                    📱 Vista AR
+                </button>
+            </nav>
+            
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="shareBtn">
+                    📤 Compartir
+                </button>
+                <button class="btn btn-primary" id="saveBtn">
+                    💾 Guardar Diseño
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <!-- Panel de Configuración (Izquierda) -->
+        <aside class="config-panel" id="configPanel">
+            <!-- Información de la Propiedad -->
+            <div class="property-info">
+                <h2 class="property-title">Apartamento Las Condes</h2>
+                <div class="property-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Área Total:</span>
+                        <span class="detail-value">85 m²</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Dormitorios:</span>
+                        <span class="detail-value">2</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Baños:</span>
+                        <span class="detail-value">2</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Precio:</span>
+                        <span class="detail-value">$185.000.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selector de Habitaciones -->
+            <div class="room-selector">
+                <h3>📍 Seleccionar Habitación</h3>
+                <div class="room-tabs">
+                    <button class="room-tab active" data-room="living">
+                        🛋️ Sala de Estar
+                    </button>
+                    <button class="room-tab" data-room="dining">
+                        🍽️ Comedor
+                    </button>
+                    <button class="room-tab" data-room="bedroom1">
+                        🛏️ Dormitorio Principal
+                    </button>
+                    <button class="room-tab" data-room="bedroom2">
+                        🛏️ Dormitorio 2
+                    </button>
+                    <button class="room-tab" data-room="kitchen">
+                        🍳 Cocina
+                    </button>
+                </div>
+            </div>
+
+            <!-- Catálogo de Muebles -->
+            <div class="furniture-catalog">
+                <h3>🛋️ Catálogo de Muebles</h3>
+                
+                <!-- Filtros -->
+                <div class="catalog-filters">
+                    <input type="text" placeholder="🔍 Buscar muebles..." id="furnitureSearch">
+                    <select id="categoryFilter">
+                        <option value="">Todas las categorías</option>
+                        <option value="sofas">Sofás y Sillones</option>
+                        <option value="mesas">Mesas</option>
+                        <option value="dormitorio">Dormitorio</option>
+                        <option value="decoracion">Decoración</option>
+                        <option value="iluminacion">Iluminación</option>
+                    </select>
+                    <select id="priceFilter">
+                        <option value="">Todos los precios</option>
+                        <option value="0-100000">$0 - $100.000</option>
+                        <option value="100000-500000">$100.000 - $500.000</option>
+                        <option value="500000-1000000">$500.000 - $1.000.000</option>
+                        <option value="1000000+">$1.000.000+</option>
+                    </select>
+                </div>
+
+                <!-- Grid de Muebles -->
+                <div class="furniture-grid" id="furnitureGrid">
+                    <!-- Los muebles se cargarán dinámicamente -->
+                </div>
+            </div>
+
+            <!-- Personalizador de Colores -->
+            <div class="color-customizer" id="colorCustomizer" style="display: none;">
+                <h3>🎨 Personalizar Colores</h3>
+                <div class="selected-item-info">
+                    <img id="selectedItemImage" src="" alt="">
+                    <div>
+                        <div class="item-name" id="selectedItemName"></div>
+                        <div class="item-price" id="selectedItemPrice"></div>
+                    </div>
+                </div>
+                
+                <div class="color-options">
+                    <h4>Colores de Material</h4>
+                    <div class="color-palette" id="colorPalette">
+                        <!-- Colores se cargarán dinámicamente -->
+                    </div>
+                </div>
+                
+                <div class="material-options">
+                    <h4>Tipo de Material</h4>
+                    <div class="material-grid" id="materialGrid">
+                        <!-- Materiales se cargarán dinámicamente -->
+                    </div>
+                </div>
+                
+                <div class="size-options">
+                    <h4>Dimensiones</h4>
+                    <div class="size-controls">
+                        <label>
+                            Ancho: <span id="widthValue">200</span>cm
+                            <input type="range" id="widthSlider" min="100" max="300" value="200">
+                        </label>
+                        <label>
+                            Largo: <span id="lengthValue">80</span>cm
+                            <input type="range" id="lengthSlider" min="50" max="120" value="80">
+                        </label>
+                        <label>
+                            Alto: <span id="heightValue">85</span>cm
+                            <input type="range" id="heightSlider" min="70" max="120" value="85">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Visor 3D Principal -->
+        <div class="viewer-container">
+            <div class="viewer-3d" id="viewer3d">
+                <!-- Canvas de Three.js se insertará aquí -->
+            </div>
+            
+            <!-- Controles del Visor -->
+            <div class="viewer-controls">
+                <div class="view-modes">
+                    <button class="view-btn active" data-view="perspective">
+                        🏠 Vista Perspectiva
+                    </button>
+                    <button class="view-btn" data-view="top">
+                        ⬇️ Vista Superior
+                    </button>
+                    <button class="view-btn" data-view="walkthrough">
+                        🚶 Recorrido
+                    </button>
+                </div>
+                
+                <div class="viewer-tools">
+                    <button class="tool-btn" id="measureTool" title="Herramienta de medición">
+                        📏
+                    </button>
+                    <button class="tool-btn" id="lightingTool" title="Configurar iluminación">
+                        💡
+                    </button>
+                    <button class="tool-btn" id="screenshotTool" title="Capturar pantalla">
+                        📸
+                    </button>
+                    <button class="tool-btn" id="fullscreenTool" title="Pantalla completa">
+                        ⛶
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Información del Visor -->
+            <div class="viewer-info">
+                <div class="viewer-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Objetos:</span>
+                        <span class="stat-value" id="objectCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">FPS:</span>
+                        <span class="stat-value" id="fpsCounter">60</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Calidad:</span>
+                        <span class="stat-value" id="qualityIndicator">Alta</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Costos (Derecha) -->
+        <aside class="cost-panel" id="costPanel">
+            <h3>💰 Resumen de Inversión</h3>
+            
+            <!-- Lista de Muebles Seleccionados -->
+            <div class="selected-furniture">
+                <h4>Muebles Seleccionados</h4>
+                <div class="furniture-list" id="selectedFurnitureList">
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <div class="empty-text">No hay muebles seleccionados</div>
+                        <div class="empty-hint">Arrastra muebles desde el catálogo</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Desglose de Costos -->
+            <div class="cost-breakdown">
+                <div class="cost-category">
+                    <div class="cost-item">
+                        <span>Muebles de Sala:</span>
+                        <span id="livingRoomCost">$0</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Muebles de Dormitorio:</span>
+                        <span id="bedroomCost">$0</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Decoración:</span>
+                        <span id="decorationCost">$0</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Iluminación:</span>
+                        <span id="lightingCost">$0</span>
+                    </div>
+                </div>
+                
+                <div class="cost-summary">
+                    <div class="cost-subtotal">
+                        <span>Subtotal:</span>
+                        <span id="subtotalCost">$0</span>
+                    </div>
+                    <div class="cost-shipping">
+                        <span>Envío e Instalación:</span>
+                        <span id="shippingCost">$0</span>
+                    </div>
+                    <div class="cost-total">
+                        <span>Total Estimado:</span>
+                        <span id="totalCost">$0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Opciones de Financiamiento -->
+            <div class="financing-options">
+                <h4>💳 Opciones de Financiamiento</h4>
+                <div class="financing-plans">
+                    <div class="plan-option">
+                        <input type="radio" name="financing" id="cash" value="cash" checked>
+                        <label for="cash">
+                            <div class="plan-name">Pago al Contado</div>
+                            <div class="plan-benefit">5% descuento</div>
+                        </label>
+                    </div>
+                    <div class="plan-option">
+                        <input type="radio" name="financing" id="installments6" value="installments6">
+                        <label for="installments6">
+                            <div class="plan-name">6 cuotas sin interés</div>
+                            <div class="plan-amount" id="installments6Amount">$0/mes</div>
+                        </label>
+                    </div>
+                    <div class="plan-option">
+                        <input type="radio" name="financing" id="installments12" value="installments12">
+                        <label for="installments12">
+                            <div class="plan-name">12 cuotas</div>
+                            <div class="plan-amount" id="installments12Amount">$0/mes</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acciones -->
+            <div class="cost-actions">
+                <button class="btn btn-secondary btn-full" id="exportListBtn">
+                    📋 Exportar Lista
+                </button>
+                <button class="btn btn-primary btn-full" id="requestQuoteBtn">
+                    📧 Solicitar Cotización
+                </button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Modal de Tour 360 -->
+    <div class="modal" id="tour360Modal">
+        <div class="modal-content modal-fullscreen">
+            <div class="modal-header">
+                <h3>🔄 Tour 360° Interactivo</h3>
+                <button class="modal-close" id="closeTour360">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tour360-container" id="tour360Container">
+                    <!-- Integración con giot hut render 360 -->
+                    <iframe 
+                        id="tour360Frame" 
+                        src="" 
+                        width="100%" 
+                        height="100%" 
+                        frameborder="0" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <div class="tour360-controls">
+                    <button class="tour-btn" id="enterDesignMode">
+                        🎨 Ir al Configurador
+                    </button>
+                    <button class="tour-btn" id="captureView">
+                        📸 Capturar Vista
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Vista AR -->
+    <div class="modal" id="arModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📱 Vista en Realidad Aumentada</h3>
+                <button class="modal-close" id="closeAR">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ar-instructions">
+                    <div class="ar-step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">Permite el acceso a la cámara</div>
+                    </div>
+                    <div class="ar-step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">Apunta a una superficie plana</div>
+                    </div>
+                    <div class="ar-step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">Toca para colocar muebles</div>
+                    </div>
+                </div>
+                <div class="ar-viewer" id="arViewer">
+                    <!-- Cámara AR se insertará aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/furniture-data.js"></script>
+    <script src="js/3d-engine.js"></script>
+    <script src="js/configurador.js"></script>
+    <script src="js/tour360-integration.js"></script>
+    <script src="js/ar-viewer.js"></script>
+    <script src="js/cost-calculator.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
