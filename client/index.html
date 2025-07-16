@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurador 3D Inmobiliario - Demo Interactivo</title>
+    <title>Configurador 3D Inmobiliario | Giot Hut Render 360</title>
     
     <!-- Three.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
+    <!-- CSS Styles -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/configurador.css">
+    <link rel="stylesheet" href="css/tour360.css">
+    
     <style>
-        * {
+        /* Inline critical CSS to avoid loading issues */
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow-x: hidden;
         }
 
-        /* Loader Styles */
-        #loadingOverlay {
+        /* Loader */
+        #loader {
             position: fixed;
             top: 0;
             left: 0;
@@ -37,7 +39,7 @@
             transition: opacity 0.5s ease;
         }
 
-        #loadingOverlay.hidden {
+        #loader.hidden {
             opacity: 0;
             pointer-events: none;
         }
@@ -67,7 +69,7 @@
             margin-bottom: 20px;
         }
 
-        .loader-bar {
+        #loaderBar {
             height: 100%;
             background: linear-gradient(90deg, #667eea, #764ba2);
             width: 0%;
@@ -84,12 +86,25 @@
             50% { transform: scale(1.1); }
         }
 
+        /* App Container */
+        .app-container {
+            min-height: 100vh;
+            display: none;
+        }
+
+        .app-container.loaded {
+            display: block;
+        }
+
         /* Header */
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             padding: 15px 20px;
             box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
         .header-content {
@@ -110,6 +125,31 @@
             color: #667eea;
         }
 
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .nav-btn.active,
+        .nav-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Stats */
         .header-stats {
             display: flex;
             gap: 20px;
@@ -118,13 +158,19 @@
             font-size: 0.9em;
         }
 
-        /* Main Layout */
-        .main-container {
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Main Content */
+        .main-content {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             display: grid;
-            grid-template-columns: 300px 1fr 300px;
+            grid-template-columns: 320px 1fr 320px;
             gap: 20px;
             min-height: calc(100vh - 80px);
         }
@@ -148,49 +194,7 @@
             padding-bottom: 10px;
         }
 
-        /* Furniture Grid */
-        .furniture-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .furniture-item {
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            border: 2px solid transparent;
-        }
-
-        .furniture-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            border-color: #667eea;
-        }
-
-        .furniture-icon {
-            font-size: 2em;
-            margin-bottom: 5px;
-        }
-
-        .furniture-name {
-            font-size: 0.8em;
-            color: #333;
-            margin-bottom: 3px;
-        }
-
-        .furniture-price {
-            font-size: 0.7em;
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        /* 3D Viewer */
+        /* Viewer Container */
         .viewer-container {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
@@ -219,7 +223,7 @@
             background: rgba(102, 126, 234, 0.1);
         }
 
-        /* Toast Notifications */
+        /* Toast Container */
         #toastContainer {
             position: fixed;
             top: 20px;
@@ -264,106 +268,63 @@
             }
         }
 
-        /* Selected Items */
-        .selected-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .selected-item {
-            display: flex;
-            justify-content: space-between;
+        /* Modal for Tour 360 */
+        #tour360Modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
             align-items: center;
-            padding: 10px;
-            background: #f8f9fa;
-            margin-bottom: 8px;
-            border-radius: 8px;
+            justify-content: center;
+            z-index: 9999;
         }
 
-        .selected-item-info {
-            flex: 1;
+        #tour360Frame {
+            width: 90%;
+            height: 90%;
+            border: none;
+            border-radius: 10px;
         }
 
-        .selected-item-name {
-            font-size: 0.9em;
-            margin-bottom: 3px;
+        .modal-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
         }
 
-        .selected-item-price {
-            font-size: 0.8em;
-            color: #667eea;
-        }
-
-        .remove-btn {
-            background: #f44336;
-            color: white;
+        .modal-btn {
+            background: rgba(255, 255, 255, 0.9);
             border: none;
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
-            font-size: 0.8em;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 12px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: bold;
+            font-size: 1.2em;
             transition: all 0.3s ease;
-            text-align: center;
-            width: 100%;
-            margin-bottom: 10px;
         }
 
-        .btn-primary {
-            background: #667eea;
-            color: white;
+        .modal-btn:hover {
+            background: white;
+            transform: scale(1.1);
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Cost Summary */
-        .cost-summary {
-            background: #f8f9fa;
+        /* Error styles */
+        .error-container {
+            background: #f8d7da;
+            color: #721c24;
             padding: 15px;
             border-radius: 8px;
-            border-left: 4px solid #667eea;
-        }
-
-        .cost-line {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.9em;
-        }
-
-        .cost-total {
-            font-weight: bold;
-            border-top: 1px solid #ddd;
-            padding-top: 8px;
-            margin-top: 8px;
+            margin: 10px 0;
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .main-container {
+            .main-content {
                 grid-template-columns: 1fr;
                 grid-template-rows: auto auto auto;
             }
@@ -371,519 +332,519 @@
             #viewer3d {
                 height: 400px;
             }
-        }
-
-        /* Error Container */
-        .error-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-
-        .error-content {
-            text-align: center;
-            padding: 40px;
-            max-width: 500px;
-        }
-
-        .error-content h2 {
-            color: #dc3545;
-            margin-bottom: 20px;
-        }
-
-        .error-message {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            color: #666;
-            font-family: monospace;
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay">
+    <!-- Loader -->
+    <div id="loader">
         <div class="loader-content">
             <div class="loader-logo">🏠</div>
             <div class="loader-title">Configurador 3D Inmobiliario</div>
             <div class="loader-progress">
-                <div class="loader-bar" id="loaderBar"></div>
+                <div id="loaderBar"></div>
             </div>
             <div class="loader-text" id="loaderText">Inicializando... 0%</div>
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                Configurador <span>3D</span>
-            </div>
-            <div class="header-stats">
-                <span>📦 Muebles: <span id="furnitureCount">0</span></span>
-                <span>💰 Total: $<span id="totalDisplay">0</span></span>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <div class="main-container">
-        <!-- Left Panel - Furniture Catalog -->
-        <div class="panel">
-            <div class="panel-title">🛋️ Catálogo de Muebles</div>
-            <div class="furniture-grid" id="furnitureGrid">
-                <!-- Furniture items will be populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Center - 3D Viewer -->
-        <div class="viewer-container">
-            <div id="viewer3d">
-                🏠 Haz clic en un mueble para agregarlo a la escena
-            </div>
-        </div>
-
-        <!-- Right Panel - Selected Items & Controls -->
-        <div class="panel">
-            <div class="panel-title">📦 Muebles Seleccionados</div>
-            <div class="selected-list" id="selectedFurniture">
-                <div style="text-align: center; color: #666; padding: 20px;">
-                    Aún no has agregado muebles
+    <!-- Main App Container -->
+    <div class="app-container" id="appContainer">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    Configurador <span>3D</span>
                 </div>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <div class="panel-title">💰 Resumen de Costos</div>
-                <div class="cost-summary" id="costSummary">
-                    <div class="cost-line">
-                        <span>Subtotal:</span>
-                        <span>$<span id="subtotal">0</span></span>
+                
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs">
+                    <button class="nav-btn active" data-mode="configurador">
+                        🎨 Configurador
+                    </button>
+                    <button class="nav-btn" data-mode="tour360">
+                        🔄 Tour 360°
+                    </button>
+                    <button class="nav-btn" data-mode="ar">
+                        📱 Vista AR
+                    </button>
+                </div>
+                
+                <!-- Stats -->
+                <div class="header-stats">
+                    <div class="stat-item">
+                        <span>🎯</span>
+                        <span>FPS: <span id="fpsCounter">60</span></span>
                     </div>
-                    <div class="cost-line">
-                        <span>Envío:</span>
-                        <span>$<span id="shipping">0</span></span>
+                    <div class="stat-item">
+                        <span>📦</span>
+                        <span>Objetos: <span id="objectCount">0</span></span>
                     </div>
-                    <div class="cost-line cost-total">
-                        <span>Total:</span>
-                        <span>$<span id="total">0</span></span>
+                    <div class="stat-item">
+                        <span>💰</span>
+                        <span>Total: $<span id="totalCost">0</span></span>
                     </div>
                 </div>
             </div>
+        </header>
 
-            <div style="margin-top: 20px;">
-                <button class="btn btn-primary" onclick="saveDesign()">
-                    💾 Guardar Diseño
-                </button>
-                <button class="btn btn-secondary" onclick="shareDesign()">
-                    🔗 Compartir
-                </button>
-                <button class="btn btn-success" onclick="requestQuote()">
-                    💬 Solicitar Cotización
-                </button>
+        <!-- Main Content Grid -->
+        <div class="main-content">
+            <!-- Left Panel - Furniture Catalog -->
+            <div class="panel" id="configPanel">
+                <div class="panel-title">🛋️ Catálogo de Muebles</div>
+                
+                <!-- Search and Filters -->
+                <div class="search-filters" style="margin-bottom: 20px;">
+                    <input type="text" id="furnitureSearch" placeholder="Buscar muebles..." 
+                           style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 10px;">
+                    
+                    <select id="categoryFilter" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+                        <option value="">Todas las categorías</option>
+                        <option value="sofas">Sofás</option>
+                        <option value="mesas">Mesas</option>
+                        <option value="dormitorio">Dormitorio</option>
+                        <option value="decoracion">Decoración</option>
+                    </select>
+                </div>
+                
+                <!-- Room Tabs -->
+                <div class="room-tabs" style="margin-bottom: 20px;">
+                    <button class="room-tab active" data-room="living">🛋️ Sala</button>
+                    <button class="room-tab" data-room="dining">🍽️ Comedor</button>
+                    <button class="room-tab" data-room="bedroom1">🛏️ Dormitorio</button>
+                    <button class="room-tab" data-room="kitchen">🍳 Cocina</button>
+                </div>
+                
+                <!-- Furniture Grid -->
+                <div id="furnitureGrid" class="furniture-grid">
+                    <!-- Furniture items will be populated by JavaScript -->
+                </div>
             </div>
+
+            <!-- Center - 3D Viewer -->
+            <div class="viewer-container">
+                <div id="viewer3d">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3em; margin-bottom: 10px;">🏠</div>
+                        <div>Configurador 3D cargando...</div>
+                        <div style="font-size: 0.9em; margin-top: 10px; color: #999;">
+                            Arrastra muebles aquí para comenzar a diseñar
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Viewer Controls -->
+                <div class="viewer-controls" style="position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px;">
+                    <button class="control-btn" onclick="resetCamera()" title="Resetear Cámara" 
+                            style="background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;">
+                        🎯
+                    </button>
+                    <button class="control-btn" onclick="toggleFullscreen()" title="Pantalla Completa"
+                            style="background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;">
+                        ⛶
+                    </button>
+                    <button class="control-btn" onclick="captureScreenshot()" title="Capturar Imagen"
+                            style="background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;">
+                        📸
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel - Configuration & Cost -->
+            <div class="panel" id="costPanel">
+                <!-- Selected Furniture -->
+                <div class="panel-title">📦 Muebles Seleccionados</div>
+                <div id="selectedFurnitureList" class="selected-furniture-list">
+                    <div class="empty-state" style="text-align: center; color: #666; padding: 20px;">
+                        <div style="font-size: 2em; margin-bottom: 10px;">📦</div>
+                        <div>No hay muebles seleccionados</div>
+                        <div style="font-size: 0.8em; margin-top: 5px;">Arrastra muebles desde el catálogo</div>
+                    </div>
+                </div>
+
+                <!-- Cost Summary -->
+                <div style="margin-top: 30px;">
+                    <div class="panel-title">💰 Resumen de Costos</div>
+                    <div class="cost-summary" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <div class="cost-line" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Sala de Estar:</span>
+                            <span>$<span id="livingRoomCost">0</span></span>
+                        </div>
+                        <div class="cost-line" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Dormitorio:</span>
+                            <span>$<span id="bedroomCost">0</span></span>
+                        </div>
+                        <div class="cost-line" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Decoración:</span>
+                            <span>$<span id="decorationCost">0</span></span>
+                        </div>
+                        <div class="cost-line" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Subtotal:</span>
+                            <span>$<span id="subtotalCost">0</span></span>
+                        </div>
+                        <div class="cost-line" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Envío:</span>
+                            <span>$<span id="shippingCost">0</span></span>
+                        </div>
+                        <div class="cost-line" style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
+                            <span>Total:</span>
+                            <span>$<span id="totalCost">0</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financing Options -->
+                <div style="margin-top: 20px;">
+                    <div class="panel-title">💳 Opciones de Financiamiento</div>
+                    <div style="background: #e8f4fd; padding: 15px; border-radius: 8px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong>6 cuotas sin interés:</strong><br>
+                            $<span id="installments6Amount">0</span> mensual
+                        </div>
+                        <div>
+                            <strong>12 cuotas:</strong><br>
+                            $<span id="installments12Amount">0</span> mensual
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                    <button id="saveBtn" class="btn btn-primary" 
+                            style="padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        💾 Guardar Configuración
+                    </button>
+                    <button id="shareBtn" class="btn btn-secondary"
+                            style="padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        🔗 Compartir Diseño
+                    </button>
+                    <button id="exportListBtn" class="btn btn-secondary"
+                            style="padding: 12px; background: #17a2b8; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        📋 Exportar Lista
+                    </button>
+                    <button id="requestQuoteBtn" class="btn btn-success"
+                            style="padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                        💬 Solicitar Cotización
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tour 360 Modal -->
+    <div id="tour360Modal">
+        <div class="modal-controls">
+            <button class="modal-btn" id="enterDesignMode" title="Modo Diseño">🎨</button>
+            <button class="modal-btn" id="captureView" title="Capturar Vista">📸</button>
+            <button class="modal-btn" id="closeTour360" title="Cerrar">✖️</button>
+        </div>
+        <iframe id="tour360Frame" allowfullscreen></iframe>
+    </div>
+
+    <!-- AR Modal -->
+    <div id="arModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9998; align-items: center; justify-content: center;">
+        <div style="text-align: center; color: white;">
+            <div style="font-size: 3em; margin-bottom: 20px;">📱</div>
+            <div style="font-size: 1.5em; margin-bottom: 20px;">Vista AR</div>
+            <div style="margin-bottom: 20px;">Funcionalidad AR en desarrollo</div>
+            <button onclick="closeModal('arModal')" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Cerrar
+            </button>
         </div>
     </div>
 
     <!-- Toast Container -->
     <div id="toastContainer"></div>
 
+    <!-- JavaScript Dependencies -->
+    <script src="js/furniture-data.js"></script>
+    <script src="js/3d-engine.js"></script>
+    <script src="js/cost-calculator.js"></script>
+    <script src="js/tour360-integration.js"></script>
+    <script src="js/ar-viewer.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/configurador.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- Fallback JavaScript if external files fail -->
     <script>
-        // Global variables
-        let selectedFurniture = [];
-        let totalCost = 0;
-
-        // Mock furniture database
-        const FURNITURE_DATABASE = [
-            { id: 1, name: 'Sofá Modular', category: 'living', price: 899990, icon: '🛋️' },
-            { id: 2, name: 'Mesa de Centro', category: 'living', price: 199990, icon: '🪑' },
-            { id: 3, name: 'Estantería', category: 'living', price: 299990, icon: '📚' },
-            { id: 4, name: 'Lámpara de Pie', category: 'living', price: 149990, icon: '💡' },
-            { id: 5, name: 'Cama King', category: 'bedroom', price: 699990, icon: '🛏️' },
-            { id: 6, name: 'Cómoda', category: 'bedroom', price: 349990, icon: '🗄️' },
-            { id: 7, name: 'Mesa de Noche', category: 'bedroom', price: 129990, icon: '🛌' },
-            { id: 8, name: 'Espejo', category: 'bedroom', price: 99990, icon: '🪞' },
-            { id: 9, name: 'Mesa Comedor', category: 'kitchen', price: 459990, icon: '🍽️' },
-            { id: 10, name: 'Sillas Comedor', category: 'kitchen', price: 199990, icon: '🪑' },
-            { id: 11, name: 'Alacena', category: 'kitchen', price: 399990, icon: '🗄️' },
-            { id: 12, name: 'Barra Desayuno', category: 'kitchen', price: 299990, icon: '🍽️' },
-            { id: 13, name: 'Escritorio', category: 'office', price: 329990, icon: '💻' },
-            { id: 14, name: 'Silla Oficina', category: 'office', price: 199990, icon: '🪑' },
-            { id: 15, name: 'Librero', category: 'office', price: 249990, icon: '📚' },
-            { id: 16, name: 'Archivador', category: 'office', price: 179990, icon: '🗃️' }
-        ];
-
-        // Initialize app
+        // Check if main scripts loaded, if not provide fallback
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Iniciando Configurador 3D...');
-            initializeApp();
+            // Wait a bit for scripts to load
+            setTimeout(function() {
+                if (typeof window.configurador === 'undefined') {
+                    console.warn('⚠️ Scripts principales no cargados, iniciando modo fallback');
+                    initializeFallbackMode();
+                }
+            }, 2000);
         });
 
-        async function initializeApp() {
-            try {
-                // Simulate loading steps
-                await updateProgress(20, 'Verificando compatibilidad...');
-                await sleep(500);
-                
-                await updateProgress(40, 'Inicializando motor 3D...');
-                await sleep(500);
-                
-                await updateProgress(60, 'Cargando catálogo de muebles...');
-                initializeFurnitureGrid();
-                await sleep(500);
-                
-                await updateProgress(80, 'Configurando interfaz...');
-                setupEventListeners();
-                await sleep(500);
-                
-                await updateProgress(100, 'Finalizando...');
-                await sleep(500);
-                
-                // Hide loading and show app
-                document.getElementById('loadingOverlay').classList.add('hidden');
-                
-                showToast('¡Configurador 3D cargado exitosamente! 🎉', 'success');
-                console.log('✅ Configurador 3D inicializado correctamente');
-                
-            } catch (error) {
-                console.error('❌ Error inicializando:', error);
-                showToast('Error al cargar el configurador', 'error');
-            }
+        function initializeFallbackMode() {
+            // Hide loader
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('appContainer').classList.add('loaded');
+            
+            // Show error message
+            showToast('⚠️ Modo simplificado - Algunos scripts no pudieron cargar', 'warning');
+            
+            // Basic functionality
+            setupBasicFunctionality();
         }
 
-        function updateProgress(percentage, message) {
-            return new Promise(resolve => {
-                const bar = document.getElementById('loaderBar');
-                const text = document.getElementById('loaderText');
-                
-                if (bar) {
-                    bar.style.width = percentage + '%';
-                }
-                
-                if (text) {
-                    text.textContent = `${message} ${percentage}%`;
-                }
-                
-                setTimeout(resolve, 100);
-            });
-        }
+        function setupBasicFunctionality() {
+            // Basic furniture data
+            const basicFurniture = [
+                { id: 1, name: 'Sofá Modular', category: 'sofas', price: 899990, icon: '🛋️' },
+                { id: 2, name: 'Mesa de Centro', category: 'mesas', price: 199990, icon: '🪑' },
+                { id: 3, name: 'Estantería', category: 'decoracion', price: 299990, icon: '📚' },
+                { id: 4, name: 'Lámpara de Pie', category: 'decoracion', price: 149990, icon: '💡' },
+                { id: 5, name: 'Cama King', category: 'dormitorio', price: 699990, icon: '🛏️' },
+                { id: 6, name: 'Mesa Comedor', category: 'mesas', price: 459990, icon: '🍽️' }
+            ];
 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+            let selectedFurniture = [];
+            let totalCost = 0;
 
-        function initializeFurnitureGrid() {
+            // Populate furniture grid
             const grid = document.getElementById('furnitureGrid');
-            
-            FURNITURE_DATABASE.forEach(item => {
-                const furnitureElement = document.createElement('div');
-                furnitureElement.className = 'furniture-item';
-                furnitureElement.dataset.furnitureId = item.id;
-                
-                furnitureElement.innerHTML = `
-                    <div class="furniture-icon">${item.icon}</div>
-                    <div class="furniture-name">${item.name}</div>
-                    <div class="furniture-price">$${item.price.toLocaleString()}</div>
-                `;
-                
-                // Add click to add
-                furnitureElement.addEventListener('click', () => {
-                    addFurnitureToScene(item);
+            if (grid) {
+                let html = '';
+                basicFurniture.forEach(item => {
+                    html += `
+                        <div class="furniture-item" onclick="addFurniture(${item.id})" 
+                             style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; cursor: pointer; text-align: center; border: 2px solid transparent; transition: all 0.3s ease;">
+                            <div style="font-size: 2em; margin-bottom: 5px;">${item.icon}</div>
+                            <div style="font-weight: bold; margin-bottom: 5px;">${item.name}</div>
+                            <div style="color: #667eea; font-weight: bold;">$${item.price.toLocaleString()}</div>
+                        </div>
+                    `;
                 });
-                
-                grid.appendChild(furnitureElement);
-            });
-        }
-
-        function setupEventListeners() {
-            // Global error handler
-            window.addEventListener('error', (event) => {
-                console.error('Error global:', event.error);
-                showToast('Ha ocurrido un error inesperado', 'error');
-            });
-            
-            // Prevent right-click context menu
-            document.addEventListener('contextmenu', (e) => {
-                if (e.target.closest('#viewer3d')) {
-                    e.preventDefault();
-                }
-            });
-        }
-
-        function addFurnitureToScene(furniture) {
-            try {
-                // Add to selected furniture
-                const existingIndex = selectedFurniture.findIndex(f => f.id === furniture.id);
-                
-                if (existingIndex >= 0) {
-                    // Increase quantity
-                    selectedFurniture[existingIndex].quantity++;
-                } else {
-                    // Add new furniture
-                    selectedFurniture.push({
-                        ...furniture,
-                        quantity: 1,
-                        addedAt: new Date()
-                    });
-                }
-                
-                updateSelectedFurnitureUI();
-                updateCostSummary();
-                updateHeaderStats();
-                
-                showToast(`${furniture.icon} ${furniture.name} agregado`, 'success');
-                
-                console.log(`📦 Mueble agregado: ${furniture.name}`);
-                
-            } catch (error) {
-                console.error('Error agregando mueble:', error);
-                showToast('Error al agregar mueble', 'error');
+                grid.innerHTML = html;
             }
-        }
 
-        function removeFurnitureFromScene(furnitureId) {
-            try {
-                const index = selectedFurniture.findIndex(f => f.id === furnitureId);
-                
-                if (index >= 0) {
-                    const furniture = selectedFurniture[index];
-                    
-                    if (furniture.quantity > 1) {
-                        furniture.quantity--;
-                    } else {
-                        selectedFurniture.splice(index, 1);
-                    }
-                    
-                    updateSelectedFurnitureUI();
-                    updateCostSummary();
-                    updateHeaderStats();
-                    
-                    showToast(`${furniture.icon} ${furniture.name} removido`, 'warning');
-                    
-                    console.log(`🗑️ Mueble removido: ${furniture.name}`);
+            // Add furniture function
+            window.addFurniture = function(id) {
+                const furniture = basicFurniture.find(f => f.id === id);
+                if (furniture) {
+                    selectedFurniture.push(furniture);
+                    updateSelectedList();
+                    updateCosts();
+                    showToast(`${furniture.icon} ${furniture.name} agregado`, 'success');
                 }
-                
-            } catch (error) {
-                console.error('Error removiendo mueble:', error);
-                showToast('Error al remover mueble', 'error');
-            }
-        }
-
-        function updateSelectedFurnitureUI() {
-            const container = document.getElementById('selectedFurniture');
-            
-            if (selectedFurniture.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; color: #666; padding: 20px;">
-                        Aún no has agregado muebles
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = '';
-            
-            selectedFurniture.forEach(furniture => {
-                const itemElement = document.createElement('div');
-                itemElement.className = 'selected-item';
-                
-                itemElement.innerHTML = `
-                    <div class="selected-item-info">
-                        <div class="selected-item-name">
-                            ${furniture.icon} ${furniture.name}
-                            ${furniture.quantity > 1 ? ` x${furniture.quantity}` : ''}
-                        </div>
-                        <div class="selected-item-price">
-                            $${(furniture.price * furniture.quantity).toLocaleString()}
-                        </div>
-                    </div>
-                    <button class="remove-btn" onclick="removeFurnitureFromScene(${furniture.id})" title="Remover">
-                        ×
-                    </button>
-                `;
-                
-                container.appendChild(itemElement);
-            });
-        }
-
-        function updateCostSummary() {
-            const subtotal = selectedFurniture.reduce((sum, furniture) => 
-                sum + (furniture.price * furniture.quantity), 0);
-            
-            const shipping = subtotal > 500000 ? 0 : 29990; // Free shipping over $500k
-            const total = subtotal + shipping;
-            
-            const elements = {
-                subtotal: document.getElementById('subtotal'),
-                shipping: document.getElementById('shipping'),
-                total: document.getElementById('total')
             };
-            
-            if (elements.subtotal) elements.subtotal.textContent = subtotal.toLocaleString();
-            if (elements.shipping) elements.shipping.textContent = shipping.toLocaleString();
-            if (elements.total) elements.total.textContent = total.toLocaleString();
-            
-            totalCost = total;
-        }
 
-        function updateHeaderStats() {
-            const furnitureCount = selectedFurniture.reduce((sum, furniture) => 
-                sum + furniture.quantity, 0);
-            
-            const countElement = document.getElementById('furnitureCount');
-            const totalElement = document.getElementById('totalDisplay');
-            
-            if (countElement) countElement.textContent = furnitureCount;
-            if (totalElement) totalElement.textContent = totalCost.toLocaleString();
-        }
+            // Remove furniture function
+            window.removeFurniture = function(index) {
+                if (selectedFurniture[index]) {
+                    const item = selectedFurniture[index];
+                    selectedFurniture.splice(index, 1);
+                    updateSelectedList();
+                    updateCosts();
+                    showToast(`${item.icon} ${item.name} removido`, 'warning');
+                }
+            };
 
-        // Action functions
-        function saveDesign() {
-            try {
+            // Update selected list
+            function updateSelectedList() {
+                const container = document.getElementById('selectedFurnitureList');
+                if (!container) return;
+
+                if (selectedFurniture.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="text-align: center; color: #666; padding: 20px;">
+                            <div style="font-size: 2em; margin-bottom: 10px;">📦</div>
+                            <div>No hay muebles seleccionados</div>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Haz clic en los muebles para agregar</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                selectedFurniture.forEach((item, index) => {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; margin-bottom: 8px; border-radius: 8px;">
+                            <div>
+                                <div style="font-weight: bold;">${item.icon} ${item.name}</div>
+                                <div style="color: #667eea; font-size: 0.9em;">$${item.price.toLocaleString()}</div>
+                            </div>
+                            <button onclick="removeFurniture(${index})" 
+                                    style="background: #dc3545; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">
+                                ×
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+
+            // Update costs
+            function updateCosts() {
+                totalCost = selectedFurniture.reduce((sum, item) => sum + item.price, 0);
+                const shipping = totalCost > 500000 ? 0 : 29990;
+                const total = totalCost + shipping;
+
+                // Update UI elements
+                const elements = {
+                    subtotalCost: totalCost,
+                    shippingCost: shipping,
+                    totalCost: total,
+                    objectCount: selectedFurniture.length,
+                    installments6Amount: Math.round(total / 6),
+                    installments12Amount: Math.round(total * 1.05 / 12)
+                };
+
+                Object.entries(elements).forEach(([id, value]) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = typeof value === 'number' ? value.toLocaleString() : value;
+                    }
+                });
+            }
+
+            // Setup navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const mode = this.dataset.mode;
+                    switch(mode) {
+                        case 'tour360':
+                            showToast('🔄 Abriendo Tour 360° demo...', 'info');
+                            document.getElementById('tour360Modal').style.display = 'flex';
+                            document.getElementById('tour360Frame').src = 'https://render360.giothut.com/embed/demo';
+                            break;
+                        case 'ar':
+                            showToast('📱 Abriendo Vista AR...', 'info');
+                            document.getElementById('arModal').style.display = 'flex';
+                            break;
+                        default:
+                            showToast('🎨 Modo Configurador activado', 'success');
+                    }
+                });
+            });
+
+            // Action buttons
+            document.getElementById('saveBtn')?.addEventListener('click', function() {
                 if (selectedFurniture.length === 0) {
                     showToast('Agrega muebles antes de guardar', 'warning');
                     return;
                 }
                 
-                const designName = prompt('Nombre del diseño:', `Diseño ${new Date().toLocaleDateString()}`);
+                const config = {
+                    furniture: selectedFurniture,
+                    total: totalCost,
+                    timestamp: new Date().toISOString()
+                };
                 
-                if (designName) {
-                    const design = {
-                        name: designName,
-                        furniture: selectedFurniture,
-                        totalCost: totalCost,
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    // Save to localStorage
-                    localStorage.setItem(`design_${Date.now()}`, JSON.stringify(design));
-                    showToast(`Diseño "${designName}" guardado exitosamente`, 'success');
-                    console.log('💾 Diseño guardado:', design);
-                }
-                
-            } catch (error) {
-                console.error('Error guardando diseño:', error);
-                showToast('Error al guardar diseño', 'error');
-            }
-        }
+                localStorage.setItem('configuracion_' + Date.now(), JSON.stringify(config));
+                showToast('💾 Configuración guardada exitosamente', 'success');
+            });
 
-        function shareDesign() {
-            try {
+            document.getElementById('shareBtn')?.addEventListener('click', function() {
                 if (selectedFurniture.length === 0) {
                     showToast('Agrega muebles antes de compartir', 'warning');
                     return;
                 }
                 
-                const shareData = {
-                    title: 'Mi Configuración 3D',
-                    text: `He creado un diseño increíble con ${selectedFurniture.length} muebles por $${totalCost.toLocaleString()}`,
-                    url: window.location.href
-                };
-                
                 if (navigator.share) {
-                    navigator.share(shareData);
+                    navigator.share({
+                        title: 'Mi Configuración 3D',
+                        text: `Configuré mi hogar con ${selectedFurniture.length} muebles por $${totalCost.toLocaleString()}`,
+                        url: window.location.href
+                    });
                 } else {
-                    // Fallback to clipboard
-                    navigator.clipboard.writeText(shareData.url).then(() => {
-                        showToast('Enlace copiado al portapapeles', 'success');
-                    }).catch(() => {
-                        showToast('No se pudo copiar el enlace', 'error');
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        showToast('🔗 Enlace copiado al portapapeles', 'success');
                     });
                 }
-                
-                console.log('🔗 Diseño compartido');
-                
-            } catch (error) {
-                console.error('Error compartiendo diseño:', error);
-                showToast('Error al compartir diseño', 'error');
-            }
-        }
+            });
 
-        function requestQuote() {
-            try {
+            document.getElementById('requestQuoteBtn')?.addEventListener('click', function() {
                 if (selectedFurniture.length === 0) {
                     showToast('Agrega muebles antes de solicitar cotización', 'warning');
                     return;
                 }
                 
-                const furnitureList = selectedFurniture.map(f => 
-                    `- ${f.name} x${f.quantity}: $${(f.price * f.quantity).toLocaleString()}`
-                ).join('\\n');
-                
-                const message = `¡Hola! Me interesa cotizar los siguientes muebles:\\n\\n${furnitureList}\\n\\nTotal: $${totalCost.toLocaleString()}\\n\\n¡Gracias!`;
-                
+                const message = `Hola! Me interesa cotizar: ${selectedFurniture.map(f => f.name).join(', ')}. Total: $${totalCost.toLocaleString()}`;
                 const whatsappUrl = `https://wa.me/56912345678?text=${encodeURIComponent(message)}`;
                 window.open(whatsappUrl, '_blank');
-                
-                showToast('Redirigiendo a WhatsApp...', 'success');
-                console.log('💬 Cotización solicitada');
-                
-            } catch (error) {
-                console.error('Error solicitando cotización:', error);
-                showToast('Error al solicitar cotización', 'error');
-            }
+                showToast('💬 Redirigiendo a WhatsApp...', 'success');
+            });
+
+            console.log('✅ Modo fallback inicializado correctamente');
         }
 
         // Utility functions
         function showToast(message, type = 'info') {
-            try {
-                const container = document.getElementById('toastContainer');
-                if (!container) return;
-                
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.textContent = message;
-                
-                container.appendChild(toast);
-                
-                // Remove after 3 seconds
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.remove();
-                    }
-                }, 3000);
-                
-                console.log(`🔔 Toast: ${message} (${type})`);
-                
-            } catch (error) {
-                console.error('Error mostrando toast:', error);
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+
+            console.log(`🔔 ${message}`);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.style.display = 'none';
             }
         }
 
-        // Error handling
-        function handleError(error) {
-            console.error('Error en la aplicación:', error);
-            
-            const errorHTML = `
-                <div class="error-container">
-                    <div class="error-content">
-                        <h2>🚫 Error en el Configurador</h2>
-                        <p>Ha ocurrido un error inesperado:</p>
-                        <div class="error-message">${error.message || 'Error desconocido'}</div>
-                        <button onclick="window.location.reload()" class="btn btn-primary">
-                            🔄 Recargar Página
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.innerHTML = errorHTML;
+        // Global button handlers
+        function resetCamera() {
+            showToast('🎯 Cámara reiniciada', 'success');
         }
 
-        // Global error handling
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Promise rechazada:', event.reason);
-            showToast('Error inesperado en la aplicación', 'error');
-        });
+        function toggleFullscreen() {
+            const viewer = document.getElementById('viewer3d');
+            if (!document.fullscreenElement) {
+                viewer.requestFullscreen().catch(() => {
+                    showToast('No se pudo activar pantalla completa', 'error');
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
 
-        console.log('🏠 Configurador 3D Inmobiliario - Script cargado exitosamente');
+        function captureScreenshot() {
+            showToast('📸 Funcionalidad de captura en desarrollo', 'info');
+        }
+
+        // Tour 360 modal controls
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('closeTour360')?.addEventListener('click', function() {
+                closeModal('tour360Modal');
+                document.getElementById('tour360Frame').src = '';
+            });
+
+            document.getElementById('enterDesignMode')?.addEventListener('click', function() {
+                closeModal('tour360Modal');
+                document.querySelector('[data-mode="configurador"]')?.click();
+                showToast('🎨 Cambiando al modo configurador...', 'success');
+            });
+
+            document.getElementById('captureView')?.addEventListener('click', function() {
+                showToast('📸 Captura de tour en desarrollo', 'info');
+            });
+        });
     </script>
 </body>
 </html>
