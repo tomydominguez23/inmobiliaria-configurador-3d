@@ -1,0 +1,545 @@
+/* ==========================================================================
+   CONFIGURADOR 3D - ESTILOS ESPECÍFICOS
+   ========================================================================== */
+
+/* Variables específicas del configurador */
+:root {
+  --configurador-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --drag-color: rgba(102, 126, 234, 0.2);
+  --drop-color: rgba(46, 204, 113, 0.2);
+  --furniture-hover: rgba(102, 126, 234, 0.1);
+}
+
+/* ==========================================================================
+   CONFIGURADOR PRINCIPAL
+   ========================================================================== */
+
+.configurador-container {
+  display: flex;
+  height: 100%;
+}
+
+.configurador-sidebar {
+  width: 350px;
+  background: var(--bg-primary);
+  border-right: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.configurador-main {
+  flex: 1;
+  position: relative;
+  background: var(--configurador-bg);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   DRAG & DROP
+   ========================================================================== */
+
+.furniture-item {
+  position: relative;
+  cursor: grab;
+  user-select: none;
+}
+
+.furniture-item:active {
+  cursor: grabbing;
+}
+
+.furniture-item.dragging {
+  opacity: 0.8;
+  transform: rotate(3deg) scale(1.05);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.drop-zone {
+  position: relative;
+}
+
+.drop-zone.drag-over {
+  background: var(--drop-color);
+  border: 2px dashed var(--success-color);
+}
+
+.drop-indicator {
+  position: absolute;
+  background: var(--drag-color);
+  border: 2px dashed var(--primary-color);
+  border-radius: var(--border-radius);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 999;
+}
+
+.drop-indicator.visible {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   PERSONALIZADOR DE COLORES
+   ========================================================================== */
+
+.color-customizer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid #e0e0e0;
+  background: var(--bg-primary);
+}
+
+.color-customizer h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+}
+
+.selected-item-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-lg);
+}
+
+.selected-item-info img {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--border-radius-sm);
+  object-fit: cover;
+}
+
+.item-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.item-price {
+  font-size: var(--font-size-sm);
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+/* Paleta de Colores */
+.color-options {
+  margin-bottom: var(--spacing-lg);
+}
+
+.color-options h4 {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.color-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  box-shadow: var(--box-shadow);
+}
+
+.color-option.selected {
+  border-color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.color-option::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.color-option.selected::after {
+  opacity: 1;
+}
+
+/* Opciones de Material */
+.material-options {
+  margin-bottom: var(--spacing-lg);
+}
+
+.material-options h4 {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.material-option {
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.material-option:hover {
+  border-color: var(--primary-color);
+  background: var(--furniture-hover);
+}
+
+.material-option.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: var(--text-white);
+}
+
+.material-name {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.material-preview {
+  width: 100%;
+  height: 30px;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Controles de Tamaño */
+.size-options h4 {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.size-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.size-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.size-control label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.size-value {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.size-slider {
+  width: 100%;
+  height: 6px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.size-slider::-webkit-slider-thumb:hover {
+  background: var(--primary-dark);
+  transform: scale(1.2);
+}
+
+.size-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--primary-color);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition);
+}
+
+.size-slider::-moz-range-thumb:hover {
+  background: var(--primary-dark);
+  transform: scale(1.2);
+}
+
+/* ==========================================================================
+   ELEMENTOS INTERACTIVOS
+   ========================================================================== */
+
+.furniture-tooltip {
+  position: absolute;
+  background: var(--bg-dark);
+  color: var(--text-white);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-xs);
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+}
+
+.furniture-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.furniture-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--bg-dark);
+}
+
+/* Selección de muebles en 3D */
+.furniture-selected {
+  outline: 3px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.furniture-highlight {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+/* ==========================================================================
+   HERRAMIENTAS DE MEDICIÓN
+   ========================================================================== */
+
+.measurement-tool {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.measurement-line {
+  stroke: var(--primary-color);
+  stroke-width: 2;
+  stroke-dasharray: 5,5;
+}
+
+.measurement-text {
+  fill: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.measurement-point {
+  fill: var(--accent-color);
+  stroke: white;
+  stroke-width: 2;
+  cursor: crosshair;
+}
+
+/* ==========================================================================
+   ANIMACIONES ESPECÍFICAS
+   ========================================================================== */
+
+@keyframes furniture-place {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(90deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.furniture-placed {
+  animation: furniture-place 0.6s ease-out;
+}
+
+@keyframes furniture-remove {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0) rotate(-180deg);
+    opacity: 0;
+  }
+}
+
+.furniture-removing {
+  animation: furniture-remove 0.4s ease-in;
+}
+
+@keyframes color-change {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.furniture-color-changing {
+  animation: color-change 0.5s ease;
+}
+
+/* ==========================================================================
+   ESTADOS DE CARGA
+   ========================================================================== */
+
+.furniture-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.furniture-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.configurador-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-overlay);
+  color: var(--text-white);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-lg);
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.configurador-loading .loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255,255,255,0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-md);
+}
+
+.configurador-loading .loading-text {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.configurador-loading .loading-progress {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   RESPONSIVE - CONFIGURADOR
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .configurador-sidebar {
+    width: 100%;
+    max-height: 50vh;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 200;
+    transform: translateY(calc(100% - 60px));
+    transition: transform 0.3s ease;
+  }
+  
+  .configurador-sidebar.expanded {
+    transform: translateY(0);
+  }
+  
+  .sidebar-handle {
+    height: 60px;
+    background: var(--primary-color);
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .sidebar-handle::after {
+    content: '⌃';
+    font-size: var(--font-size-xl);
+    transition: transform 0.3s ease;
+  }
+  
+  .configurador-sidebar.expanded .sidebar-handle::after {
+    transform: rotate(180deg);
+  }
+  
+  .color-palette {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .material-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
